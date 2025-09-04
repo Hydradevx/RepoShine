@@ -3,86 +3,95 @@
 import React, { useState } from "react";
 import { WizardStepProps } from "@/components/WizardLayout";
 
+type Section = {
+  id: string;
+  type: "heading" | "text" | "list" | "code";
+  title?: string;
+  content?: string | string[];
+};
+
 export default function StepContent({ onNext, defaultData }: WizardStepProps) {
-  const [title, setTitle] = useState<string>((defaultData?.title as string) || "");
-  const [tagline, setTagline] = useState<string>((defaultData?.tagline as string) || "");
-  const [about, setAbout] = useState<string>((defaultData?.about as string) || "");
-  const [features, setFeatures] = useState<string>(
-    (defaultData?.features as string) || "Fast setup\nBeautiful templates\nCustom badges"
+  const [sections, setSections] = useState<Section[]>(
+    (defaultData?.sections as Section[]) || [
+      { id: "about", type: "text", title: "About", content: "A short description here..." },
+      { id: "features", type: "list", title: "Features", content: ["Fast setup", "Beautiful templates"] },
+      { id: "installation", type: "code", title: "Installation", content: "pnpm add my-package" },
+    ]
   );
-  const [installation, setInstallation] = useState<string>(
-    (defaultData?.installation as string) || "pnpm add my-package"
-  );
-  const [usage, setUsage] = useState<string>((defaultData?.usage as string) || "npx run");
+
+  function updateSection(idx: number, updates: Partial<Section>) {
+    setSections((prev) =>
+      prev.map((s, i) => (i === idx ? { ...s, ...updates } : s))
+    );
+  }
+
+  function removeSection(idx: number) {
+    setSections((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function addSection() {
+    setSections((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), type: "text", title: "New Section", content: "" },
+    ]);
+  }
 
   function handleNext() {
-    onNext({
-      title,
-      tagline,
-      about,
-      // store features as array by splitting lines
-      features: features.split("\n").map((s) => s.trim()).filter(Boolean),
-      installation,
-      usage,
-    });
+    onNext({ sections });
   }
 
   return (
     <div>
       <h3 className="text-2xl font-bold mb-3">🧩 Content</h3>
 
-      <label className="text-sm text-slate-300">Project title</label>
-      <input
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-        placeholder="My Project"
-        className="w-full p-2 rounded bg-slate-800 border border-slate-700 mb-3"
-      />
+      {sections.map((section, idx) => (
+        <div key={section.id} className="mb-6 p-3 border rounded bg-slate-800">
+          <label className="block text-sm text-slate-300">Section Title</label>
+          <input
+            value={section.title || ""}
+            onChange={(e) => updateSection(idx, { title: e.target.value })}
+            className="w-full p-2 rounded bg-slate-700 mb-2"
+          />
 
-      <label className="text-sm text-slate-300">Tagline / Short description</label>
-      <input
-        value={tagline}
-        onChange={(e) => setTagline(e.target.value)}
-        placeholder="A short tagline"
-        className="w-full p-2 rounded bg-slate-800 border border-slate-700 mb-3"
-      />
+          <label className="block text-sm text-slate-300">Content</label>
+          <textarea
+            value={
+              Array.isArray(section.content)
+                ? section.content.join("\n")
+                : section.content || ""
+            }
+            onChange={(e) =>
+              updateSection(idx, {
+                content:
+                  section.type === "list"
+                    ? e.target.value.split("\n").map((s) => s.trim())
+                    : e.target.value,
+              })
+            }
+            rows={4}
+            className="w-full p-2 rounded bg-slate-700 mb-2"
+          />
 
-      <label className="text-sm text-slate-300">About (short paragraph)</label>
-      <textarea
-        value={about}
-        onChange={(e) => setAbout(e.target.value)}
-        rows={3}
-        className="w-full p-2 rounded bg-slate-800 border border-slate-700 mb-3"
-      />
+          <button
+            onClick={() => removeSection(idx)}
+            className="text-red-400 hover:text-red-300 text-sm"
+          >
+            Remove Section
+          </button>
+        </div>
+      ))}
 
-      <label className="text-sm text-slate-300">Features (one per line)</label>
-      <textarea
-        value={features}
-        onChange={(e) => setFeatures(e.target.value)}
-        rows={4}
-        className="w-full p-2 rounded bg-slate-800 border border-slate-700 mb-3"
-      />
+      <button
+        onClick={addSection}
+        className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 rounded"
+      >
+        ➕ Add Section
+      </button>
 
-      <label className="text-sm text-slate-300">Installation (code)</label>
-      <textarea
-        value={installation}
-        onChange={(e) => setInstallation(e.target.value)}
-        rows={2}
-        className="w-full p-2 rounded bg-slate-800 border border-slate-700 mb-3"
-      />
-
-      <label className="text-sm text-slate-300">Usage (code / example)</label>
-      <textarea
-        value={usage}
-        onChange={(e) => setUsage(e.target.value)}
-        rows={2}
-        className="w-full p-2 rounded bg-slate-800 border border-slate-700 mb-3"
-      />
-
-      <div className="flex gap-2">
+      <div className="flex justify-end mt-6">
         <button
           onClick={handleNext}
-          className="px-4 py-2 rounded bg-indigo-600 hover:bg-indigo-500"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white"
         >
           Next →
         </button>

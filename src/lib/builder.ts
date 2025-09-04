@@ -1,4 +1,4 @@
-type Data = {
+export type Data = {
   repoUrl?: string;
   owner?: string;
   repo?: string;
@@ -18,25 +18,29 @@ type Data = {
   website?: string;
   twitter?: string;
   contactEmail?: string;
+  contributing?: string;
+  roadmap?: string[];
+  acknowledgements?: string[];
 };
 
-function badgeUrlFor(subject: string, owner?: string, repo?: string, color = "6b7280") {
+function badgeUrlFor(
+  subject: "stars" | "forks" | "issues" | "license" | "size",
+  owner?: string,
+  repo?: string,
+  color = "6b7280"
+) {
   if (!owner || !repo) return "";
   const base = "https://img.shields.io";
-  switch (subject) {
-    case "stars":
-      return `${base}/github/stars/${owner}/${repo}?style=for-the-badge&color=${color}`;
-    case "forks":
-      return `${base}/github/forks/${owner}/${repo}?style=for-the-badge&color=${color}`;
-    case "issues":
-      return `${base}/github/issues/${owner}/${repo}?style=for-the-badge&color=${color}`;
-    case "license":
-      return `${base}/github/license/${owner}/${repo}?style=for-the-badge&color=${color}`;
-    case "size":
-      return `${base}/github/repo-size/${owner}/${repo}?style=for-the-badge&color=${color}`;
-    default:
-      return "";
-  }
+
+  const routes: Record<typeof subject, string> = {
+    stars: `/github/stars/${owner}/${repo}`,
+    forks: `/github/forks/${owner}/${repo}`,
+    issues: `/github/issues/${owner}/${repo}`,
+    license: `/github/license/${owner}/${repo}`,
+    size: `/github/repo-size/${owner}/${repo}`,
+  };
+
+  return `${base}${routes[subject]}?style=for-the-badge&color=${color}`;
 }
 
 export function buildReadme(data: Data): string {
@@ -59,14 +63,21 @@ export function buildReadme(data: Data): string {
     website,
     twitter,
     contactEmail,
+    contributing,
+    roadmap,
+    acknowledgements,
   } = data;
 
-  const color = theme === "catppuccin-mocha" ? "b4befe" : theme === "nord" ? "88c0d0" : "6b7280";
+  const color =
+    theme === "catppuccin-mocha"
+      ? "b4befe"
+      : theme === "nord"
+      ? "88c0d0"
+      : "6b7280";
 
-  // Header / badges
   let md = "";
 
-  // badges
+  // ── HEADER / BADGES ──────────────────────────────
   const badges: string[] = [];
   if (includeStars) badges.push(`![Stars](${badgeUrlFor("stars", owner, repo, color)})`);
   if (includeForks) badges.push(`![Forks](${badgeUrlFor("forks", owner, repo, color)})`);
@@ -74,33 +85,50 @@ export function buildReadme(data: Data): string {
   if (includeLicense) badges.push(`![License](${badgeUrlFor("license", owner, repo, color)})`);
   if (includeSize) badges.push(`![Repo Size](${badgeUrlFor("size", owner, repo, color)})`);
 
-  if (badges.length) md += `<div align="center">\n\n${badges.join(" ")}\n\n</div>\n\n`;
+  if (badges.length) {
+    md += `<div align="center">\n\n${badges.join(" ")}\n\n</div>\n\n`;
+  }
 
-  // title
   if (title) md += `# ${title}\n\n`;
   if (tagline) md += `> ${tagline}\n\n`;
 
-  // about
+  // ── ABOUT ──────────────────────────────
   if (about) md += `${about}\n\n`;
 
-  // features
-  if (features && features.length) {
+  // ── FEATURES ──────────────────────────────
+  if (features?.length) {
     md += `## Features\n\n`;
-    for (const f of features) md += `- ${f}\n`;
-    md += `\n`;
+    md += features.map((f) => `- ${f}`).join("\n") + "\n\n";
   }
 
-  // installation
+  // ── INSTALLATION ──────────────────────────────
   if (installation) {
     md += `## Installation\n\n\`\`\`bash\n${installation}\n\`\`\`\n\n`;
   }
 
-  // usage
+  // ── USAGE ──────────────────────────────
   if (usage) {
     md += `## Usage\n\n\`\`\`bash\n${usage}\n\`\`\`\n\n`;
   }
 
-  // social / links
+  // ── CONTRIBUTING ──────────────────────────────
+  if (contributing) {
+    md += `## Contributing\n\n${contributing}\n\n`;
+  }
+
+  // ── ROADMAP ──────────────────────────────
+  if (roadmap?.length) {
+    md += `## Roadmap\n\n`;
+    md += roadmap.map((item) => `- [ ] ${item}`).join("\n") + "\n\n";
+  }
+
+  // ── ACKNOWLEDGEMENTS ──────────────────────────────
+  if (acknowledgements?.length) {
+    md += `## Acknowledgements\n\n`;
+    md += acknowledgements.map((ack) => `- ${ack}`).join("\n") + "\n\n";
+  }
+
+  // ── LINKS / SOCIALS ──────────────────────────────
   if (website || twitter || discord || contactEmail) {
     md += `## Links\n\n`;
     if (website) md += `- Website: ${website}\n`;
@@ -110,11 +138,12 @@ export function buildReadme(data: Data): string {
     md += `\n`;
   }
 
-  // footer / credits
+  // ── FOOTER ──────────────────────────────
   md += `---\n\n*Generated with RepoShine*`;
 
-  // optionally add repo link in footer
-  if (owner && repo) md += ` • [${owner}/${repo}](https://github.com/${owner}/${repo})\n`;
+  if (owner && repo) {
+    md += ` • [${owner}/${repo}](https://github.com/${owner}/${repo})\n`;
+  }
 
   return md;
 }
