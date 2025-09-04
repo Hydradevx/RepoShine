@@ -1,11 +1,18 @@
-import Sidebar from "@/components/Sidebar"
-import EditorCanvas from "@/components/EditorCanvas"
+import WizardLayout from "@/components/WizardLayout"
+import StepRepo from "@/app/wizard/StepRepo"
+// later we’ll import StepContent, StepTheme, StepBadges, StepSocials, StepPreview
 
-export default function EditorPage() {
+export default function HomePage() {
   return (
-    <div className="flex h-screen">
-      <Sidebar />
-      <EditorCanvas />
-    </div>
+    <WizardLayout
+      steps={[
+        StepRepo,
+        // StepContent,
+        // StepTheme,
+        // StepBadges,
+        // StepSocials,
+        // StepPreview,
+      ]}
+    />
   )
 }
